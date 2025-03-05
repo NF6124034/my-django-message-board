@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>留言板</title>
+    <!-- Bootstrap 樣式 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+
+<h1 class="mb-4">留言板</h1>
+
+{% if user.is_authenticated %}
+  <p>👋 歡迎，{{ user.username }}！
+    <a href="#" onclick="document.getElementById('logout-form').submit();">登出</a>
+  </p>
+  <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
+    {% csrf_token %}
+  </form>
+{% else %}
+  <p><a href="{% url 'login' %}">登入</a></p>
+{% endif %}
+
+<!-- 表單錯誤提示 -->
+{% if form.errors %}
+    <div class="alert alert-danger">
+        請檢查表單內容是否正確！
+    </div>
+{% endif %}
+
+<!-- 留言表單開始 -->
+<form method="GET" class="mb-4">
+    <div class="input-group">
+        <input type="text" name="q" class="form-control" placeholder="搜尋留言內容" value="{{ query }}">
+        <button type="submit" class="btn btn-outline-secondary">搜尋</button>
+    </div>
+</form>
+
+<form method="GET" class="mb-4">
+    <div class="input-group">
+        <input type="text" name="q" class="form-control" placeholder="搜尋留言內容" value="{{ query }}">
+        <select name="sort" class="form-select">
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>最新留言</option>
+            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>最舊留言</option>
+            <option value="likes" {% if sort == 'likes' %}selected{% endif %}>最多讚</option>
+        </select>
+        <button type="submit" class="btn btn-outline-secondary">搜尋 / 排序</button>
+    </div>
+</form>
+
+<form method="POST" class="mb-4">
+    {% csrf_token %}
+    <div class="mb-3">
+        {{ form.name.label_tag }}
+        {{ form.name }}
+        {% for error in form.name.errors %}
+            <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+    </div>
+    <div class="mb-3">
+        {{ form.message.label_tag }}
+        {{ form.message }}
+        {% for error in form.message.errors %}
+            <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary">送出留言</button>
+</form>
+<hr>
+<!-- 留言表單結束 -->
+
+<!-- 留言列表 -->
+{% for message in messages %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">{{ message.name }} 說：</h5>
+            <p class="card-text">{{ message.message }}</p>
+            <p class="card-text">
+                <small class="text-muted">
+                  時間：{{ message.updated_at|date:"Y-m-d H:i" }}
+                  {% if message.updated_at != message.created_at %}
+                    （已編輯）
+                  {% endif %}
+                </small>
+              </p>
+              
+              
+            <p class="card-text"><small class="text-muted">用戶：{{ message.user.username }}</small></p>
+            <p class="card-text"><small class="text-muted">當前用戶：{{ user.username }}</small></p>
+
+            <!-- 按讚按鈕 -->
+            <form action="{% url 'like_message' message.id %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    👍 {{ message.likes.count }} 讚
+                </button>
+            </form>
+
+            {% if message.user == user %}
+                <a href="{% url 'delete_message' message.id %}" class="btn btn-danger btn-sm">刪除</a>
+                <a href="{% url 'edit_message' message.id %}" class="btn btn-secondary btn-sm">修改</a>
+            {% endif %}
+        </div>
+    </div>
+{% empty %}
+    <p>目前沒有留言。</p>
+{% endfor %}
+
+<!-- 分頁按鈕開始 -->
+<nav aria-label="留言分頁">
+    <ul class="pagination">
+      {% if messages.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ messages.previous_page_number }}">上一頁</a>
+        </li>
+      {% endif %}
+  
+      <li class="page-item active">
+        <span class="page-link">
+          第 {{ messages.number }} 頁 / 共 {{ messages.paginator.num_pages }} 頁
+        </span>
+      </li>
+  
+      {% if messages.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ messages.next_page_number }}">下一頁</a>
+        </li>
+      {% endif %}
+    </ul>
+</nav>
+<!-- 分頁按鈕結束 -->
+</body>
+</html>

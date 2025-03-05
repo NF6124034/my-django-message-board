@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>編輯留言</title>
+</head>
+<body>
+    <h1>編輯留言</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        <p>
+            名字：<input type="text" name="name" value="{{ message.name }}" required>
+        </p>
+        <p>
+            留言：<textarea name="message" required>{{ message.message }}</textarea>
+        </p>
+        <button type="submit">更新留言</button>
+    </form>
+
+    <p><a href="/">回留言板</a></p>
+</body>
+</html>
